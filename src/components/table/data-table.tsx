@@ -1,9 +1,16 @@
-"use client"
+import * as React from 'react';
+import type {
+  ColumnDef,
+  SortingState,
+} from '@tanstack/react-table';
 
 import {
   flexRender,
-  type Table as TanStackTable,
-} from "@tanstack/react-table"
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 
 import {
   Table,
@@ -12,62 +19,100 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
+} from '@/components/ui/table'; // [cite: 25]
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface DataTableProps<TData> {
-  table: TanStackTable<TData>
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  isLoading: boolean;
+  pageCount: number;
+  pagination: {
+    pageIndex: number;
+    pageSize: number;
+  };
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
+  sorting: SortingState;
+  onSortingChange: (sorting: SortingState) => void;
 }
 
-export function DataTable<TData>({
-  table,
-}: DataTableProps<TData>) {
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  isLoading,
+  pageCount,
+  pagination,
+  onPaginationChange,
+  sorting,
+  onSortingChange,
+}: DataTableProps<TData, TValue>) {
+  const table = useReactTable({
+    data,
+    columns,
+    pageCount,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: (updater) => {
+      const newState = typeof updater === 'function' ? updater(sorting) : updater;
+      onSortingChange(newState);
+    },
+    onPaginationChange: (updater) => {
+      const newState = typeof updater === 'function' ? updater(pagination) : updater;
+      onPaginationChange(newState);
+    },
+    state: {
+      sorting,
+      pagination,
+    },
+    manualPagination: true,
+    manualSorting: true,
+  });
+
   return (
-    <div className="w-full">
+    <div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              // Skeleton loading state
+              Array.from({ length: pagination.pageSize }).map((_, i) => (
+                <TableRow key={i}>
+                  {columns.map((col, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={table.options.columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No results found.
                 </TableCell>
               </TableRow>
             )}
@@ -75,29 +120,30 @@ export function DataTable<TData>({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            onPaginationChange({ ...pagination, pageIndex: pagination.pageIndex - 1 })
+          }
+          disabled={pagination.pageIndex === 0}
+        >
+          Previous
+        </Button>
+        <span className="text-sm">
+          Page {pagination.pageIndex + 1} of {pageCount}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            onPaginationChange({ ...pagination, pageIndex: pagination.pageIndex + 1 })
+          }
+          disabled={pagination.pageIndex + 1 >= pageCount}
+        >
+          Next
+        </Button>
       </div>
     </div>
-  )
+  );
 }

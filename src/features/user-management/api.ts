@@ -1,7 +1,7 @@
 import type { AxiosError, AxiosResponse } from 'axios';
 
 import axios from 'axios';
-import type { IListUserReq, IUserManagement } from './types';
+import type { IListUserReq, IListUserRes, IUserManagement } from './types';
 import { CONFIG } from '@/config-global';
 
 const axiosInstance = axios.create({
@@ -18,7 +18,31 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export const fetchUsers = async (params: IListUserReq): Promise<IUserManagement[]> => {
-  const res = await axiosInstance.get('/api/v1/user', { params });
-  return res.data;
+export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> => {
+  const cleanParams: Record<string, string | number | boolean> = {};
+
+  if (params.search) {
+    cleanParams.search = params.search; // General search [cite: 37]
+  }
+  if (params.role) {
+    cleanParams.role = params.role; // Role filter [cite: 38]
+  }
+  if (params.createdAt) {
+    // This is tricky with MockAPI. We'll assume it can filter by a date string.
+    cleanParams.createdAt = params.createdAt.toISOString().split('T')[0]; // [cite: 38]
+  }
+
+  if (params.sortBy) {
+    cleanParams.sortBy = params.sortBy; // [cite: 41]
+  }
+  if (params.order) {
+    cleanParams.order = params.order; // [cite: 42]
+  }
+  const res = await axiosInstance.get('/api/v1/user', { params: cleanParams });
+  const data = res.data;
+  const totalSize = data.length; // Faking total size
+  return{
+    data: data,
+    totalSize: totalSize
+  }
 };
