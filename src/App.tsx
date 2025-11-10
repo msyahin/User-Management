@@ -1,8 +1,8 @@
-import UsersPage from "./pages/user-management";
+import UserManagementPage from "./pages/user-management"
 
 function App() {
   return (
-    <UsersPage />
+    <UserManagementPage/>
   )
 }
 
