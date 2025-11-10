@@ -1,8 +1,8 @@
 import type { AxiosError } from 'axios';
-// import type { IErrorResponse } from 'src/types/common'; // Assuming this global type
+import type { IErrorResponse } from '@/features/common'; // Assuming this global type
 import type { ColumnSort } from '@tanstack/react-table';
 
-// import { toast } from 'sonner';
+import { toast } from 'sonner';
 // import { useTranslation } from 'react-i18next';
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -30,17 +30,17 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
 import { useDebounce } from '@/features/hooks/use-debounce'
-// import { useModalManager } from '@/components/modal/use-modal-manager';
+import { useModalManager } from '@/components/modal/use-modal-manager';
 
 // Our new Shadcn-based data table
 import { DataTable } from '@/components/table/data-table';
 
 import { UserManagementColumns } from './columns';
-import { /*deleteUser,*/ fetchUsers } from '../api';
+import { deleteUser, fetchUsers } from '../api';
 import { IUserRole } from '../types';
 
 const UserManagementTable = () => {
-  // const { openContextModal, openAlertModal, closeAllModals } = useModalManager();
+  const { openContextModal, openAlertModal, closeAllModals } = useModalManager();
   // const { t } = useTranslation();
 
   // Filters State
@@ -79,18 +79,19 @@ const UserManagementTable = () => {
     refetchOnWindowFocus: false,
   });
 
-  // const deleteMutation = useMutation({
-  //   mutationFn: async (userId: string) => deleteUser(userId),
-  //   onSuccess: () => {
-  //     refetch();
-  //     closeAllModals();
-  //     toast.success(t('user_management.delete_success'));
-  //   },
-  //   onError: (error: AxiosError) => {
-  //     const errorPayload = error?.response?.data as IErrorResponse;
-  //     toast.error(errorPayload?.message ?? 'Failed to delete user');
-  //   },
-  // });
+  const deleteMutation = useMutation({
+    mutationFn: async (userId: string) => deleteUser(userId),
+    onSuccess: () => {
+      refetch();
+      closeAllModals();
+      // toast.success(t('user_management.delete_success'));
+      toast.success('Delete Suceess');
+    },
+    onError: (error: AxiosError) => {
+      const errorPayload = error?.response?.data as IErrorResponse;
+      toast.error(errorPayload?.message ?? 'Failed to delete user');
+    },
+  });
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -163,18 +164,18 @@ const UserManagementTable = () => {
           </div>
           {/* Add User Button */}
           <Button
-            // onClick={() => {
-            //   openContextModal({
-            //     modal: 'userAction',
-            //     title: 'Add User',
-            //     innerProps: {
-            //       type: 'create',
-            //       onSuccess: () => {
-            //         refetch();
-            //       },
-            //     },
-            //   });
-            // }}
+            onClick={() => {
+              openContextModal({
+                modal: 'userAction',
+                title: 'Add User',
+                innerProps: {
+                  type: 'create',
+                  onSuccess: () => {
+                    refetch();
+                  },
+                },
+              });
+            }}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add User
@@ -183,29 +184,31 @@ const UserManagementTable = () => {
 
         <DataTable
           columns={UserManagementColumns({
-            // onEditClick: (user) => {
-            //   openContextModal({
-            //     modal: 'userAction',
-            //     title: t('user_management.update_user'),
-            //     innerProps: {
-            //       type: 'edit',
-            //       user,
-            //       onSuccess: () => {
-            //         refetch();
-            //       },
-            //     },
-            //   });
-            // },
-            // onDeleteClick: (user) => {
-            //   openAlertModal({
-            //     title: t('user_management.delete_title'),
-            //     description: `Are you sure you want to delete ${user.name}?`,
-            //     onConfirm: () => {
-            //       deleteMutation.mutate(user.id);
-            //     },
-            //     confirmColor: 'error', // Use this to style the confirm button
-            //   });
-            // },
+            onEditClick: (user) => {
+              openContextModal({
+                modal: 'userAction',
+                // title: t('user_management.update_user'),
+                title: 'Delete User',
+                innerProps: {
+                  type: 'edit',
+                  user,
+                  onSuccess: () => {
+                    refetch();
+                  },
+                },
+              });
+            },
+            onDeleteClick: (user) => {
+              openAlertModal({
+                // title: t('user_management.delete_title'),
+                title: 'Delete User',
+                description: `Are you sure you want to delete ${user.name}?`,
+                onConfirm: () => {
+                  deleteMutation.mutate(user.id);
+                },
+                confirmVariant: 'default', // Use this to style the confirm button
+              });
+            },
           })}
           data={data?.data ?? []}
           pageCount={data?.totalSize ? Math.ceil(data.totalSize / pagination.pageSize) : 0}

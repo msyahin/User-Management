@@ -1,7 +1,7 @@
 import type { AxiosError, AxiosResponse } from 'axios';
 
 import axios from 'axios';
-import type { IListUserReq, IListUserRes, IUserManagement } from './types';
+import type { IAddUserReq, IListUserReq, IListUserRes, IUserManagement } from './types';
 import { CONFIG } from '@/config-global';
 
 const axiosInstance = axios.create({
@@ -45,4 +45,22 @@ export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> =>
     data: data,
     totalSize: totalSize
   }
+};
+
+export const createUser = async (payload: IAddUserReq): Promise<void> => {
+  // [cite: 157]
+  await axiosInstance.post('/api/v1/user', payload);
+};
+
+export const updateUser = async (
+  userId: string, // MockAPI uses string ID
+  payload: Partial<IAddUserReq>
+): Promise<void> => {
+  // [cite: 157]
+  await axiosInstance.put(`/api/v1/user/${userId}`, payload);
+};
+
+export const deleteUser = async (userId: string): Promise<void> => {
+  // [cite: 157]
+  await axiosInstance.delete(`/api/v1/user/${userId}`);
 };

@@ -18,8 +18,8 @@ import { formatStr } from '@/utils/format-time'
 import { type IUserManagement, IUserRole, IUserStatus } from '../types';
 
 interface IUserManagementColumns {
-  // onEditClick: (user: IUserManagement) => void;
-  // onDeleteClick: (user: IUserManagement) => void;
+  onEditClick: (user: IUserManagement) => void;
+  onDeleteClick: (user: IUserManagement) => void;
 }
 
 // Custom header component for sorting
@@ -44,8 +44,8 @@ const SortableHeader = ({
 };
 
 export const UserManagementColumns = ({
-  // onEditClick,
-  // onDeleteClick,
+  onEditClick,
+  onDeleteClick,
 }: IUserManagementColumns): ColumnDef<IUserManagement>[] => {
   // const { t } = useTranslation();
 
@@ -131,14 +131,14 @@ export const UserManagementColumns = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem 
-            // onClick={() => onEditClick(row.original)}
+            onClick={() => onEditClick(row.original)}
             >
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-red-600"
-              // onClick={() => onDeleteClick(row.original)}
+              onClick={() => onDeleteClick(row.original)}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
