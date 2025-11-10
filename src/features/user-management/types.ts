@@ -1,6 +1,4 @@
-import { z } from 'zod';
-
-export type User = {
+export type IUserManagement = {
   id: string;
   createdAt: string;
   name: string;
@@ -10,4 +8,8 @@ export type User = {
   active: boolean;
   role: 'Admin' | 'User' | 'Guest';
   bio: string;
+};
+
+export type IListUserReq = {
+  search?: string;
 };

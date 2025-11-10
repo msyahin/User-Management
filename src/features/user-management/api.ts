@@ -1,9 +1,24 @@
-import type { User } from './types';
+import type { AxiosError, AxiosResponse } from 'axios';
 
-export const getUsers = async (): Promise<User[]> => {
-  const response = await fetch('https://68ff8c08e02b16d1753e6ed3.mockapi.io/maia/api/v1/user');
-  if (!response.ok) {
-    throw new Error('Failed to fetch users');
+import axios from 'axios';
+import type { IListUserReq, IUserManagement } from './types';
+import { CONFIG } from '@/config-global';
+
+const axiosInstance = axios.create({
+  baseURL: CONFIG.APP_SERVER_URL,
+  paramsSerializer: {
+    indexes: null,
+  },
+});
+
+axiosInstance.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  async (error: AxiosError): Promise<AxiosError> => {
+    throw error;
   }
-  return response.json();
+);
+
+export const fetchUsers = async (params: IListUserReq): Promise<IUserManagement[]> => {
+  const res = await axiosInstance.get('/api/v1/user', { params });
+  return res.data;
 };
