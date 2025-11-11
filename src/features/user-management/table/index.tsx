@@ -1,11 +1,16 @@
 import type { AxiosError } from 'axios';
 import type { IErrorResponse } from '@/features/common'; // Assuming this global type
-import type { ColumnSort } from '@tanstack/react-table';
+import type { ColumnSort, RowSelectionState } from '@tanstack/react-table'; // --- ADDED ---
 
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { PlusCircle, X, Calendar as CalendarIcon } from 'lucide-react';
+import {
+  PlusCircle,
+  X,
+  Calendar as CalendarIcon,
+  Trash2,
+} from 'lucide-react'; // --- ADDED ---
 
 // Shadcn UI Components
 import { Input } from '@/components/ui/input';
@@ -28,7 +33,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
-import { useDebounce } from '@/features/hooks/use-debounce'
+import { useDebounce } from '@/features/hooks/use-debounce';
 import { useModalManager } from '@/components/modal/use-modal-manager';
 
 // Our new Shadcn-based data table
@@ -54,6 +59,7 @@ const UserManagementTable = () => {
     pageIndex: 0, // tanstack-table uses 0-based index
     pageSize: 10,
   });
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({}); // --- ADDED ---
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
@@ -83,7 +89,7 @@ const UserManagementTable = () => {
     onSuccess: () => {
       refetch();
       closeAllModals();
-      toast.success(('Delete Success'));
+      toast.success('Delete Success');
     },
     onError: (error: AxiosError) => {
       const errorPayload = error?.response?.data as IErrorResponse;
@@ -91,12 +97,32 @@ const UserManagementTable = () => {
     },
   });
 
+  // --- ADDED ---
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (userIds: string[]) => {
+      return Promise.all(userIds.map((id) => deleteUser(id)));
+    },
+    onSuccess: () => {
+      refetch();
+      setRowSelection({}); // Clear selection
+      closeAllModals();
+      toast.success('Selected users deleted successfully.');
+    },
+    onError: (error: AxiosError) => {
+      const errorPayload = error?.response?.data as IErrorResponse;
+      toast.error(errorPayload?.message ?? 'Failed to delete selected users.');
+    },
+  });
+  // --- END ADDED ---
+
   const handleClearFilters = () => {
     setSearchTerm('');
     // FIX 3: Reset roleFilter back to 'ALL'
     setRoleFilter('ALL');
     setDateFilter(null);
   };
+
+  const selectedRowCount = Object.keys(rowSelection).length; // --- ADDED ---
 
   return (
     <Card>
@@ -155,10 +181,37 @@ const UserManagementTable = () => {
                 />
               </PopoverContent>
             </Popover>
-            {/* Clear Filters */}
-            <Button variant="ghost" onClick={handleClearFilters}>
-              <X className="mr-2 h-4 w-4" /> Clear
-            </Button>
+            {/* --- UPDATED: Conditional Clear/Delete Button --- */}
+            {selectedRowCount > 0 ? (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  const selectedUserIds = Object.keys(rowSelection)
+                    .map((index) => data?.data[parseInt(index)]?.id)
+                    .filter(Boolean) as string[];
+
+                  if (selectedUserIds.length === 0) return;
+
+                  openAlertModal({
+                    title: 'Delete Selected Users',
+                    description: `Are you sure you want to delete ${selectedUserIds.length} user(s)? This action cannot be undone.`,
+                    onConfirm: () => {
+                      bulkDeleteMutation.mutate(selectedUserIds);
+                    },
+                    confirmVariant: 'destructive',
+                  });
+                }}
+                disabled={bulkDeleteMutation.isPending}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete ({selectedRowCount})
+              </Button>
+            ) : (
+              <Button variant="ghost" onClick={handleClearFilters}>
+                <X className="mr-2 h-4 w-4" /> Clear
+              </Button>
+            )}
+            {/* --- END UPDATED --- */}
           </div>
           {/* Add User Button */}
           <Button
@@ -202,7 +255,7 @@ const UserManagementTable = () => {
                 onConfirm: () => {
                   deleteMutation.mutate(user.id);
                 },
-                confirmVariant: 'default', // Use this to style the confirm button
+                confirmVariant: 'destructive', // Use this to style the confirm button
               });
             },
           })}
@@ -213,6 +266,8 @@ const UserManagementTable = () => {
           onPaginationChange={setPagination}
           sorting={sorting}
           onSortingChange={setSorting}
+          rowSelection={rowSelection} // --- ADDED ---
+          onRowSelectionChange={setRowSelection} // --- ADDED ---
         />
       </CardContent>
     </Card>

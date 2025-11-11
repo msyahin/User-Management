@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox'; //
 
-import { formatStr } from '@/utils/format-time'
+import { formatStr } from '@/utils/format-time';
 import { type IUserManagement, IUserRole } from '../types';
 
 interface IUserManagementColumns {
@@ -32,13 +33,13 @@ const SortableHeader = ({
   const sortDir = column.getIsSorted() as SortDirection | false;
 
   return (
-    <Button
-      variant="ghost"
+    <div
+      className="flex items-center gap-1 cursor-pointer select-none"
       onClick={() => column.toggleSorting(sortDir === 'asc')}
     >
       {label}
-      <ArrowUpDown className="ml-2 h-4 w-4" />
-    </Button>
+      <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+    </div>
   );
 };
 
@@ -50,31 +51,57 @@ export const UserManagementColumns = ({
 
   return [
     {
-      accessorKey: 'name',
-      header: ({ column }) => <SortableHeader label="Name" column={column} />, // [cite: 41]
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
       cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={row.original.avatar} alt={row.original.name} />
-            <AvatarFallback>
-              {row.original.name.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="font-medium">{row.original.name}</span>
-        </div>
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      id: 'avatar',
+      header: () => null,
+      cell: ({ row }) => (
+        <Avatar>
+          <AvatarImage src={row.original.avatar} alt={row.original.name} />
+          <AvatarFallback>
+            {row.original.name.substring(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      ),
+    },
+    {
+      accessorKey: 'name',
+      header: ({ column }) => <SortableHeader label="Name" column={column} />, //
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.name}</span>
       ),
     },
     {
       accessorKey: 'email',
-      header: ({ column }) => <SortableHeader label="Email" column={column} />, // [cite: 41]
+      header: ({ column }) => <SortableHeader label="Email" column={column} />, //
     },
     {
       accessorKey: 'phoneNumber',
-      header: 'Phone Number', // [cite: 30]
+      header: 'Phone Number', //
     },
     {
       accessorKey: 'role',
-      header: 'Role', // [cite: 31]
+      header: 'Role', //
       cell: ({ row }) => {
         const role = row.original.role;
         const variant: 'default' | 'secondary' | 'outline' =
@@ -88,7 +115,7 @@ export const UserManagementColumns = ({
     },
     {
       accessorKey: 'active',
-      header: 'Status', // [cite: 32]
+      header: 'Status', //
       cell: ({ row }) => {
         const status = row.original.active ? 'Active' : 'Inactive';
         const variant: 'default' | 'destructive' = row.original.active
@@ -100,7 +127,7 @@ export const UserManagementColumns = ({
     {
       accessorKey: 'createdAt',
       header: ({ column }) => (
-        <SortableHeader label="Creation Date" column={column} /> // [cite: 41]
+        <SortableHeader label="Creation Date" column={column} /> //
       ),
       cell: ({ row }) => (
         <span>{dayjs(row.original.createdAt).format(formatStr.paramCase.date)}</span>
@@ -108,7 +135,7 @@ export const UserManagementColumns = ({
     },
     {
       accessorKey: 'bio',
-      header: 'Bio', // [cite: 34]
+      header: 'Bio', //
       cell: ({ row }) => (
         <p className="max-w-[200px] truncate" title={row.original.bio}>
           {row.original.bio}
@@ -117,31 +144,33 @@ export const UserManagementColumns = ({
     },
     {
       accessorKey: 'actions',
-      header: 'Actions',
+      header: () => <div className="text-center">Actions</div>,
       cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => onEditClick(row.original)}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600"
-              onClick={() => onDeleteClick(row.original)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex justify-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => onEditClick(row.original)}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => onDeleteClick(row.original)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ),
     },
   ];
