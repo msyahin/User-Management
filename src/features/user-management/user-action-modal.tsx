@@ -2,8 +2,8 @@ import type { AxiosError } from 'axios';
 import type { IErrorResponse } from '@/features/common';
 import type { ContextModalProps } from '@/components/modal/types';
 
-import { toast } from 'sonner'
-// import { useTranslation } from 'react-i18next';
+import { useState } from 'react'; // --- ADDED ---
+import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -21,7 +21,7 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription, // --- ADDED ---
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -36,10 +36,10 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch'; // --- ADDED ---
+import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // --- ADDED ---
 
-import { createUser, updateUser } from './api';
-// --- UserStatus is removed ---
+import { createUser, updateUser, uploadToImgBb } from './api'; // --- UPDATED ---
 import { UserFormSchema, IUserRole } from './types';
 import type { IAddUserReq, IUserManagement } from './types';
 
@@ -53,7 +53,12 @@ export const UserActionModal = ({
   onSuccess: () => void;
 }>) => {
   const { type, user, onSuccess } = innerProps;
-//   const { t } = useTranslation();
+  //   const { t } = useTranslation();
+
+  // --- ADDED ---
+  const [preview, setPreview] = useState<string | null>(user?.avatar || null);
+  const [isUploading, setIsUploading] = useState(false);
+  // --- END ADDED ---
 
   const form = useForm<IAddUserReq>({
     resolver: zodResolver(UserFormSchema),
@@ -64,7 +69,6 @@ export const UserActionModal = ({
       avatar: user?.avatar ?? '',
       role: user?.role,
       bio: user?.bio ?? '',
-      // --- UPDATED: Use 'active' boolean ---
       active: user?.active ?? true,
     },
   });
@@ -74,7 +78,6 @@ export const UserActionModal = ({
   } = form;
 
   const addMutation = useMutation({
-    // Payload is now the correct IAddUserReq type
     mutationFn: async (values: IAddUserReq) => createUser(values),
     onSuccess: () => {
       toast.success('User added successfully.');
@@ -88,7 +91,6 @@ export const UserActionModal = ({
   });
 
   const editMutation = useMutation({
-    // Payload is now the correct IAddUserReq type
     mutationFn: async (values: IAddUserReq) =>
       updateUser(user?.id ?? '0', values),
     onSuccess: () => {
@@ -102,13 +104,37 @@ export const UserActionModal = ({
     },
   });
 
+  // --- UPDATED: onSubmit now handles file upload ---
   const onSubmit = async (data: IAddUserReq) => {
-    // data object now contains { ..., active: boolean }
-    if (type === 'create') {
-      addMutation.mutate(data);
-    }
-    if (type === 'edit') {
-      editMutation.mutate(data);
+    setIsUploading(true);
+    let submissionData = { ...data };
+    let uploadToast: string | number | undefined;
+
+    try {
+      // Check if avatar is a File object
+      if (submissionData.avatar && typeof submissionData.avatar !== 'string') {
+        uploadToast = toast.loading('Uploading avatar...');
+        const imageUrl = await uploadToImgBb(submissionData.avatar);
+        submissionData.avatar = imageUrl; // Replace File with URL
+        toast.success('Avatar uploaded!', { id: uploadToast });
+      }
+
+      // Proceed with create or edit mutation
+      if (type === 'create') {
+        addMutation.mutate(submissionData);
+      }
+      if (type === 'edit') {
+        editMutation.mutate(submissionData);
+      }
+    } catch (error) {
+      console.error('Submission error:', error);
+      if (uploadToast) {
+        toast.error('Avatar upload failed.', { id: uploadToast });
+      } else {
+        toast.error('Failed to save user.');
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -122,7 +148,63 @@ export const UserActionModal = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* ... other fields (name, email, etc.) ... */}
+                        {/* --- REPLACED AVATAR FIELD --- */}
+            <FormField
+              control={form.control}
+              name="avatar"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Avatar</FormLabel>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={preview || undefined} />
+                      <AvatarFallback>
+                        {form.getValues('name')?.substring(0, 2).toUpperCase() ||
+                          '??'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="w-full space-y-2">
+                      <FormControl>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          disabled={isUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              field.onChange(file); // Set form value to File
+                              setPreview(URL.createObjectURL(file)); // Set preview
+                            }
+                          }}
+                          className="file:text-primary file:font-semibold"
+                        />
+                      </FormControl>
+                      <div className="relative flex items-center">
+                        <div className="h-px w-full bg-border" />
+                        <span className="absolute left-1/2 -translate-x-1/2 bg-background px-2 text-xs text-muted-foreground">
+                          OR
+                        </span>
+                      </div>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="Enter image URL"
+                          disabled={isUploading}
+                          // Only show string value, not [object File]
+                          value={typeof field.value === 'string' ? field.value : ''}
+                          onChange={(e) => {
+                            field.onChange(e.target.value); // Set form value to string
+                            setPreview(e.target.value); // Set preview
+                          }}
+                        />
+                      </FormControl>
+                    </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* --- END REPLACED FIELD --- */}
             <FormField
               control={form.control}
               name="name"
@@ -168,22 +250,6 @@ export const UserActionModal = ({
             />
             <FormField
               control={form.control}
-              name="avatar"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Avatar URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* --- REPLACED flex div --- */}
-
-            <FormField
-              control={form.control}
               name="role"
               render={({ field }) => (
                 <FormItem>
@@ -191,6 +257,7 @@ export const UserActionModal = ({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={isUploading}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -210,7 +277,6 @@ export const UserActionModal = ({
               )}
             />
 
-            {/* --- REPLACED Status dropdown with Active Switch --- */}
             <FormField
               control={form.control}
               name="active"
@@ -226,6 +292,7 @@ export const UserActionModal = ({
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      disabled={isUploading}
                     />
                   </FormControl>
                 </FormItem>
@@ -243,6 +310,7 @@ export const UserActionModal = ({
                       placeholder="Tell us a little bit about the user..."
                       className="resize-none"
                       {...field}
+                      disabled={isUploading}
                     />
                   </FormControl>
                   <FormMessage />
@@ -256,13 +324,20 @@ export const UserActionModal = ({
               </DialogClose>
               <Button
                 type="submit"
-                disabled={!isDirty || addMutation.isPending || editMutation.isPending}
+                disabled={
+                  !isDirty ||
+                  addMutation.isPending ||
+                  editMutation.isPending ||
+                  isUploading
+                }
               >
-                {addMutation.isPending || editMutation.isPending
-                  ? 'Saving...'
-                  : type === 'create'
-                    ? 'Create User'
-                    : 'Save Changes'}
+                {isUploading
+                  ? 'Uploading...'
+                  : addMutation.isPending || editMutation.isPending
+                    ? 'Saving...'
+                    : type === 'create'
+                      ? 'Create User'
+                      : 'Save Changes'}
               </Button>
             </DialogFooter>
           </form>

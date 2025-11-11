@@ -1,5 +1,4 @@
 import type { AxiosError, AxiosResponse } from 'axios';
-
 import axios from 'axios';
 import type { IAddUserReq, IListUserReq, IListUserRes } from './types';
 import { CONFIG } from '@/config-global';
@@ -18,25 +17,48 @@ axiosInstance.interceptors.response.use(
   }
 );
 
+// --- ADDED: ImgBB Upload Function ---
+export const uploadToImgBb = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('key', CONFIG.APP_IMGBB_API_KEY);
+
+  try {
+    const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    if (response.data && response.data.data && response.data.data.url) {
+      return response.data.data.url;
+    }
+    throw new Error('Invalid response from ImgBB');
+  } catch (error) {
+    console.error('ImgBB upload failed:', error);
+    throw new Error('Image upload failed');
+  }
+};
+// --- END ADDED BLOCK ---
+
 export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> => {
   const cleanParams: Record<string, string | number | boolean> = {};
 
   if (params.search) {
-    cleanParams.search = params.search; // General search [cite: 37]
+    cleanParams.search = params.search; // General search
   }
   if (params.role) {
-    cleanParams.role = params.role; // Role filter [cite: 38]
+    cleanParams.role = params.role; // Role filter
   }
   if (params.createdAt) {
     // This is tricky with MockAPI. We'll assume it can filter by a date string.
-    cleanParams.createdAt = params.createdAt.toISOString().split('T')[0]; // [cite: 38]
+    cleanParams.createdAt = params.createdAt.toISOString().split('T')[0]; //
   }
 
   if (params.sortBy) {
-    cleanParams.sortBy = params.sortBy; // [cite: 41]
+    cleanParams.sortBy = params.sortBy; //
   }
   if (params.order) {
-    cleanParams.order = params.order; // [cite: 42]
+    cleanParams.order = params.order; //
   }
   const res = await axiosInstance.get('/api/v1/user', { params: cleanParams });
   const data = res.data;
@@ -48,7 +70,7 @@ export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> =>
 };
 
 export const createUser = async (payload: IAddUserReq): Promise<void> => {
-  // [cite: 157]
+  //
   await axiosInstance.post('/api/v1/user', payload);
 };
 
@@ -56,11 +78,11 @@ export const updateUser = async (
   userId: string, // MockAPI uses string ID
   payload: Partial<IAddUserReq>
 ): Promise<void> => {
-  // [cite: 157]
+  //
   await axiosInstance.put(`/api/v1/user/${userId}`, payload);
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
-  // [cite: 157]
+  //
   await axiosInstance.delete(`/api/v1/user/${userId}`);
 };
