@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios';
-import type { IErrorResponse } from '@/features/common'; // Assuming this global type
-import type { ContextModalProps } from '@/components/modal/types'; // CORRECTED PATH
+import type { IErrorResponse } from '@/features/common';
+import type { ContextModalProps } from '@/components/modal/types';
 
 import { toast } from 'sonner';
 // import { useTranslation } from 'react-i18next';
@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 
-// Shadcn UI Form + Dialog Components - CORRECTED PATHS
+// Shadcn UI Components
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription, // --- ADDED ---
   FormField,
   FormItem,
   FormLabel,
@@ -35,10 +36,11 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch'; // --- ADDED ---
 
-// Relative paths, no changes needed
 import { createUser, updateUser } from './api';
-import { UserFormSchema, IUserRole, IUserStatus } from './types';
+// --- UserStatus is removed ---
+import { UserFormSchema, IUserRole } from './types';
 import type { IAddUserReq, IUserManagement } from './types';
 
 export const UserActionModal = ({
@@ -61,8 +63,9 @@ export const UserActionModal = ({
       phoneNumber: user?.phoneNumber ?? '',
       avatar: user?.avatar ?? '',
       role: user?.role,
-      status: user?.active ? IUserStatus.ACTIVE : IUserStatus.INACTIVE,
       bio: user?.bio ?? '',
+      // --- UPDATED: Use 'active' boolean ---
+      active: user?.active ?? true,
     },
   });
 
@@ -71,6 +74,7 @@ export const UserActionModal = ({
   } = form;
 
   const addMutation = useMutation({
+    // Payload is now the correct IAddUserReq type
     mutationFn: async (values: IAddUserReq) => createUser(values),
     onSuccess: () => {
       toast.success('User added successfully.');
@@ -84,6 +88,7 @@ export const UserActionModal = ({
   });
 
   const editMutation = useMutation({
+    // Payload is now the correct IAddUserReq type
     mutationFn: async (values: IAddUserReq) =>
       updateUser(user?.id ?? '0', values),
     onSuccess: () => {
@@ -98,6 +103,7 @@ export const UserActionModal = ({
   });
 
   const onSubmit = async (data: IAddUserReq) => {
+    // data object now contains { ..., active: boolean }
     if (type === 'create') {
       addMutation.mutate(data);
     }
@@ -116,6 +122,7 @@ export const UserActionModal = ({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* ... other fields (name, email, etc.) ... */}
             <FormField
               control={form.control}
               name="name"
@@ -172,62 +179,59 @@ export const UserActionModal = ({
                 </FormItem>
               )}
             />
-            <div className="flex gap-4">
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Role</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.values(IUserRole).map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.values(IUserStatus).map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+
+            {/* --- REPLACED flex div --- */}
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(IUserRole).map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* --- REPLACED Status dropdown with Active Switch --- */}
+            <FormField
+              control={form.control}
+              name="active"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Active Status</FormLabel>
+                    <FormDescription>
+                      Set whether this user account is active or inactive.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="bio"
@@ -245,9 +249,9 @@ export const UserActionModal = ({
                 </FormItem>
               )}
             />
+
             <DialogFooter>
               <DialogClose asChild>
-                {/* <Button variant="outline">{t('button.cancel')}</Button> */}
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
               <Button

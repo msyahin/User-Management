@@ -85,7 +85,7 @@ const UserManagementTable = () => {
       refetch();
       closeAllModals();
       // toast.success(t('user_management.delete_success'));
-      toast.success('Delete Suceess');
+      toast.success(('Delete Success'));
     },
     onError: (error: AxiosError) => {
       const errorPayload = error?.response?.data as IErrorResponse;
@@ -153,7 +153,7 @@ const UserManagementTable = () => {
                     setDateFilter(date ?? null);
                   }}
                   required={false}
-                  initialFocus
+                  autoFocus
                 />
               </PopoverContent>
             </Popover>

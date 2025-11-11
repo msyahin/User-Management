@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
 import { formatStr } from '@/utils/format-time'
-import { type IUserManagement, IUserRole, IUserStatus } from '../types';
+import { type IUserManagement, IUserRole } from '../types';
 
 interface IUserManagementColumns {
   onEditClick: (user: IUserManagement) => void;
@@ -91,9 +91,7 @@ export const UserManagementColumns = ({
       accessorKey: 'active',
       header: 'Status', // [cite: 32]
       cell: ({ row }) => {
-        const status = row.original.active
-          ? IUserStatus.ACTIVE
-          : IUserStatus.INACTIVE;
+        const status = row.original.active ? 'Active' : 'Inactive';
         const variant: 'default' | 'destructive' = row.original.active
           ? 'default'
           : 'destructive';
@@ -130,8 +128,8 @@ export const UserManagementColumns = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-            onClick={() => onEditClick(row.original)}
+            <DropdownMenuItem
+              onClick={() => onEditClick(row.original)}
             >
               <Edit className="mr-2 h-4 w-4" />
               Edit

@@ -6,11 +6,6 @@ export enum IUserRole {
   GUEST = 'Guest'
 }
 
-export enum IUserStatus {
-  ACTIVE = 'Active',
-  INACTIVE = 'Inactive',
-}
-
 export type IUserManagement = {
   id: string;
   createdAt: string;
@@ -29,8 +24,8 @@ export const UserFormSchema = z.object({
   phoneNumber: z.string().min(1, 'Phone number is required'),
   avatar: z.url('Must be a valid URL').optional().or(z.literal('')),
   role: z.enum(IUserRole),
-  status: z.enum(IUserStatus),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
+  active: z.boolean(),
 });
 
 export type IAddUserReq = z.infer<typeof UserFormSchema>;
