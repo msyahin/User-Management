@@ -1,7 +1,7 @@
 import type { AxiosError, AxiosResponse } from 'axios';
 
 import axios from 'axios';
-import type { IAddUserReq, IListUserReq, IListUserRes, IUserManagement } from './types';
+import type { IAddUserReq, IListUserReq, IListUserRes } from './types';
 import { CONFIG } from '@/config-global';
 
 const axiosInstance = axios.create({
