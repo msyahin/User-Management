@@ -2,7 +2,7 @@ import type { AxiosError } from 'axios';
 import type { IErrorResponse } from '@/features/common';
 import type { ContextModalProps } from '@/components/modal/types';
 
-import { toast } from 'sonner';
+import { toast } from 'sonner'
 // import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
