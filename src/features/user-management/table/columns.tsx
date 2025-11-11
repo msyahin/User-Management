@@ -1,6 +1,12 @@
 import dayjs from 'dayjs';
 import type { ColumnDef, SortDirection } from '@tanstack/react-table';
-import { MoreHorizontal, ArrowUpDown, Edit, Trash2 } from 'lucide-react';
+import {
+  MoreHorizontal,
+  ArrowUpDown,
+  Edit,
+  Trash2,
+  FileText, // --- ADDED ---
+} from 'lucide-react';
 
 // Shadcn UI Components
 import { Button } from '@/components/ui/button';
@@ -20,6 +26,7 @@ import { type IUserManagement, IUserRole } from '../types';
 interface IUserManagementColumns {
   onEditClick: (user: IUserManagement) => void;
   onDeleteClick: (user: IUserManagement) => void;
+  onViewBioClick: (user: IUserManagement) => void; // --- ADDED ---
 }
 
 // Custom header component for sorting
@@ -46,6 +53,7 @@ const SortableHeader = ({
 export const UserManagementColumns = ({
   onEditClick,
   onDeleteClick,
+  onViewBioClick, // --- ADDED ---
 }: IUserManagementColumns): ColumnDef<IUserManagement>[] => {
   // const { t } = useTranslation();
 
@@ -155,6 +163,16 @@ export const UserManagementColumns = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {/* --- ADDED THIS BLOCK --- */}
+              {row.original.bio && (
+                <DropdownMenuItem
+                  onClick={() => onViewBioClick(row.original)}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  View Bio
+                </DropdownMenuItem>
+              )}
+              {/* --- END ADDED BLOCK --- */}
               <DropdownMenuItem
                 onClick={() => onEditClick(row.original)}
               >

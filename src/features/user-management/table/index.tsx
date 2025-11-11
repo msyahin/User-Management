@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios';
 import type { IErrorResponse } from '@/features/common'; // Assuming this global type
-import type { ColumnSort, RowSelectionState } from '@tanstack/react-table'; // --- ADDED ---
+import type { ColumnSort, RowSelectionState } from '@tanstack/react-table'; //
 
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
@@ -10,7 +10,7 @@ import {
   X,
   Calendar as CalendarIcon,
   Trash2,
-} from 'lucide-react'; // --- ADDED ---
+} from 'lucide-react'; //
 
 // Shadcn UI Components
 import { Input } from '@/components/ui/input';
@@ -59,7 +59,7 @@ const UserManagementTable = () => {
     pageIndex: 0, // tanstack-table uses 0-based index
     pageSize: 10,
   });
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({}); // --- ADDED ---
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({}); //
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
@@ -97,7 +97,7 @@ const UserManagementTable = () => {
     },
   });
 
-  // --- ADDED ---
+  //
   const bulkDeleteMutation = useMutation({
     mutationFn: async (userIds: string[]) => {
       return Promise.all(userIds.map((id) => deleteUser(id)));
@@ -113,7 +113,7 @@ const UserManagementTable = () => {
       toast.error(errorPayload?.message ?? 'Failed to delete selected users.');
     },
   });
-  // --- END ADDED ---
+  //
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -122,7 +122,7 @@ const UserManagementTable = () => {
     setDateFilter(null);
   };
 
-  const selectedRowCount = Object.keys(rowSelection).length; // --- ADDED ---
+  const selectedRowCount = Object.keys(rowSelection).length; //
 
   return (
     <Card>
@@ -258,6 +258,21 @@ const UserManagementTable = () => {
                 confirmVariant: 'destructive', // Use this to style the confirm button
               });
             },
+            // --- ADDED THIS BLOCK ---
+            onViewBioClick: (user) => {
+              openAlertModal({
+                title: `${user.name}'s Bio`,
+                description: (
+                  <p className="max-h-[300px] overflow-y-auto whitespace-pre-wrap break-words">
+                    {user.bio || 'No bio provided.'}
+                  </p>
+                ),
+                confirmText: 'OK',
+                onConfirm: () => closeAllModals(),
+                cancelText: 'Close',
+              });
+            },
+            // --- END ADDED BLOCK ---
           })}
           data={data?.data ?? []}
           pageCount={data?.totalSize ? Math.ceil(data.totalSize / pagination.pageSize) : 0}
@@ -266,8 +281,8 @@ const UserManagementTable = () => {
           onPaginationChange={setPagination}
           sorting={sorting}
           onSortingChange={setSorting}
-          rowSelection={rowSelection} // --- ADDED ---
-          onRowSelectionChange={setRowSelection} // --- ADDED ---
+          rowSelection={rowSelection} //
+          onRowSelectionChange={setRowSelection} //
         />
       </CardContent>
     </Card>
