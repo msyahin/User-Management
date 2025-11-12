@@ -1,9 +1,11 @@
 import type { AxiosError, AxiosResponse } from 'axios';
 import axios from 'axios';
-import type { IAddUserReq, IListUserReq, IListUserRes } from './types';
+import type { IAddUserReq, IListUserReq, IListUserRes, IUserManagement } from './types';
 import { CONFIG } from '@/config-global';
 import dayjs from 'dayjs';
-import { formatStr } from '@/utils/format-time';
+import isBetween from 'dayjs/plugin/isBetween';
+
+dayjs.extend(isBetween);
 
 const axiosInstance = axios.create({
   baseURL: CONFIG.APP_SERVER_URL,
@@ -41,23 +43,81 @@ export const uploadToImgBb = async (file: File): Promise<string> => {
 };
 
 export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> => {
-  const formattedStartDate = dayjs(params?.startDate).startOf('day').format(formatStr.tz);
-  const formattedEndDate = dayjs(params?.endDate).endOf('day').format(formatStr.tz);
+  const {
+    search,
+    role,
+    page = 1,
+    limit = 10,
+    sortBy,
+    order,
+    startDate,
+    endDate,
+  } = params;
 
-  const res = await axiosInstance.get('/api/v1/user',
-    {
-      params: {
-        ...params,
-        startDate: formattedStartDate,
-        endDate: formattedEndDate
+  const res = await axiosInstance.get('/api/v1/user');
+  const allUsers: IUserManagement[] = res.data;
+
+  const filteredUsers = allUsers.filter((user) => {
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      const nameMatch = user.name.toLowerCase().includes(lowerSearch);
+      const emailMatch = user.email.toLowerCase().includes(lowerSearch);
+      if (!nameMatch && !emailMatch) {
+        return false;
       }
+    }
+
+    if (role) {
+      if (user.role !== role) {
+        return false;
+      }
+    }
+
+    if (startDate && endDate) {
+      const userDate = dayjs(user.createdAt);
+      if (
+        !userDate.isBetween(
+          dayjs(startDate).startOf('day'),
+          dayjs(endDate).endOf('day'),
+          null,
+          '[]'
+        )
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  if (sortBy && order) {
+    filteredUsers.sort((a, b) => {
+      const valA = a[sortBy as keyof IUserManagement];
+      const valB = b[sortBy as keyof IUserManagement];
+
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      }
+      if (typeof valA === 'number' && typeof valB === 'number') {
+        return order === 'asc' ? valA - valB : valB - valA;
+      }
+      // Fallback 
+      return order === 'asc'
+        ? String(valA).localeCompare(String(valB))
+        : String(valB).localeCompare(String(valA));
     });
-  const data = res.data;
-  const totalSize = data.length; // Faking total size
-  return {
-    data: data,
-    totalSize: totalSize
   }
+
+  const totalSize = filteredUsers.length;
+  const paginatedData = filteredUsers.slice(
+    (page - 1) * limit,
+    page * limit
+  );
+
+  return {
+    data: paginatedData,
+    totalSize: totalSize,
+  };
 };
 
 export const createUser = async (payload: IAddUserReq): Promise<void> => {
@@ -65,7 +125,7 @@ export const createUser = async (payload: IAddUserReq): Promise<void> => {
 };
 
 export const updateUser = async (
-  userId: string, // MockAPI uses string ID
+  userId: string,
   payload: Partial<IAddUserReq>
 ): Promise<void> => {
   await axiosInstance.put(`/api/v1/user/${userId}`, payload);

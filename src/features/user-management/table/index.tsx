@@ -60,8 +60,8 @@ const UserManagementTable = () => {
       order: (
         sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined
       ) as 'asc' | 'desc' | undefined,
-      startDate: startDate || dayjs().subtract(1, 'month'),
-      endDate: endDate || dayjs()
+      startDate: startDate || undefined,
+      endDate: endDate || undefined
     };
   }, [debouncedSearch, roleFilter, pagination, sorting, startDate, endDate]);
 
@@ -87,6 +87,8 @@ const UserManagementTable = () => {
   const handleClearFilters = () => {
     setSearchTerm('');
     setRoleFilter('ALL');
+    setStartDate(null);
+    setEndDate(null);
   };
 
   return (

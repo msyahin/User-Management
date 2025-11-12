@@ -42,6 +42,8 @@ export type IListUserReq = {
   order?: 'asc' | 'desc';
   startDate?: Dayjs;
   endDate?: Dayjs;
+  page?: number;
+  limit?: number;
 };
 
 export type IListUserRes = {
