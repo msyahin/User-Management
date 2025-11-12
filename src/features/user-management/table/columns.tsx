@@ -6,6 +6,8 @@ import {
   Edit,
   Trash2,
   FileText,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 
 // Shadcn UI Components
@@ -37,13 +39,23 @@ const SortableHeader = ({
 }) => {
   const sortDir = column.getIsSorted() as SortDirection | false;
 
+  const SortIcon = () => {
+    if (sortDir === 'asc') {
+      return <ArrowUp className="h-4 w-4 text-foreground" />;
+    }
+    if (sortDir === 'desc') {
+      return <ArrowDown className="h-4 w-4 text-foreground" />;
+    }
+    return <ArrowUpDown className="h-4 w-4 text-muted-foreground" />;
+  };
+
   return (
     <div
       className="flex items-center gap-1 cursor-pointer select-none"
       onClick={() => column.toggleSorting(sortDir === 'asc')}
     >
       {label}
-      <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+      <SortIcon />
     </div>
   );
 };

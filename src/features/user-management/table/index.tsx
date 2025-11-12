@@ -50,6 +50,13 @@ const UserManagementTable = () => {
   const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(1, 'month'));
   const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
 
+  const isFiltered =
+    searchTerm !== '' ||
+    roleFilter !== 'ALL' ||
+    startDate !== null ||
+    endDate !== null ||
+    sorting.length > 0;
+
   const queryParams = useMemo(() => {
     return {
       search: debouncedSearch || undefined,
@@ -89,6 +96,7 @@ const UserManagementTable = () => {
     setRoleFilter('ALL');
     setStartDate(null);
     setEndDate(null);
+    setSorting([]);
   };
 
   return (
@@ -108,7 +116,7 @@ const UserManagementTable = () => {
               value={roleFilter}
               onValueChange={(value) => setRoleFilter(value)}
             >
-              <SelectTrigger className="w-full md:w-[180px]">
+              <SelectTrigger className="w-full md:w-auto">
                 <SelectValue placeholder="Filter by role" />
               </SelectTrigger>
               <SelectContent>
@@ -127,9 +135,11 @@ const UserManagementTable = () => {
               setStartDate={setStartDate}
               setEndDate={setEndDate} />
             {/* Clear Filters */}
-            <Button variant="ghost" onClick={handleClearFilters}>
-              <X className="mr-2 h-4 w-4" /> Clear
-            </Button>
+            {isFiltered && (
+              <Button variant="outline" onClick={handleClearFilters}>
+                <X className="mr-2 h-4 w-4" /> Clear
+              </Button>
+            )}
           </div>
           {/* Add User Button */}
           <Button
