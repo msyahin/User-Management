@@ -17,7 +17,6 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-// --- ADDED: ImgBB Upload Function ---
 export const uploadToImgBb = async (file: File): Promise<string> => {
   const formData = new FormData();
   formData.append('image', file);
@@ -38,27 +37,26 @@ export const uploadToImgBb = async (file: File): Promise<string> => {
     throw new Error('Image upload failed');
   }
 };
-// --- END ADDED BLOCK ---
 
 export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> => {
   const cleanParams: Record<string, string | number | boolean> = {};
 
   if (params.search) {
-    cleanParams.search = params.search; // General search
+    cleanParams.search = params.search;
   }
   if (params.role) {
-    cleanParams.role = params.role; // Role filter
+    cleanParams.role = params.role;
   }
   if (params.createdAt) {
     // This is tricky with MockAPI. We'll assume it can filter by a date string.
-    cleanParams.createdAt = params.createdAt.toISOString().split('T')[0]; //
+    cleanParams.createdAt = params.createdAt.toISOString().split('T')[0];
   }
 
   if (params.sortBy) {
-    cleanParams.sortBy = params.sortBy; //
+    cleanParams.sortBy = params.sortBy; 
   }
   if (params.order) {
-    cleanParams.order = params.order; //
+    cleanParams.order = params.order; 
   }
   const res = await axiosInstance.get('/api/v1/user', { params: cleanParams });
   const data = res.data;
@@ -70,7 +68,6 @@ export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> =>
 };
 
 export const createUser = async (payload: IAddUserReq): Promise<void> => {
-  //
   await axiosInstance.post('/api/v1/user', payload);
 };
 
@@ -78,11 +75,9 @@ export const updateUser = async (
   userId: string, // MockAPI uses string ID
   payload: Partial<IAddUserReq>
 ): Promise<void> => {
-  //
   await axiosInstance.put(`/api/v1/user/${userId}`, payload);
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
-  //
   await axiosInstance.delete(`/api/v1/user/${userId}`);
 };

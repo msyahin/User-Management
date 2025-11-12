@@ -1,7 +1,6 @@
 import type {
   ColumnDef,
   SortingState,
-  RowSelectionState, // --- ADDED ---
 } from '@tanstack/react-table';
 
 import {
@@ -19,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'; //
+} from '@/components/ui/table'; 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -35,8 +34,6 @@ interface DataTableProps<TData, TValue> {
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   sorting: SortingState;
   onSortingChange: (sorting: SortingState) => void;
-  rowSelection: RowSelectionState; // --- ADDED ---
-  onRowSelectionChange: (rowSelection: RowSelectionState) => void; // --- ADDED ---
 }
 
 export function DataTable<TData, TValue>({
@@ -48,8 +45,6 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   sorting,
   onSortingChange,
-  rowSelection, // --- ADDED ---
-  onRowSelectionChange, // --- ADDED ---
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -66,18 +61,9 @@ export function DataTable<TData, TValue>({
       const newState = typeof updater === 'function' ? updater(pagination) : updater;
       onPaginationChange(newState);
     },
-    // --- ADDED ---
-    onRowSelectionChange: (updater) => {
-      const newState =
-        typeof updater === 'function' ? updater(rowSelection) : updater;
-      onRowSelectionChange(newState);
-    },
-    enableRowSelection: true, // --- ADDED ---
-    // --- END ADDED ---
     state: {
       sorting,
       pagination,
-      rowSelection, // --- ADDED ---
     },
     manualPagination: true,
     manualSorting: true,
@@ -102,10 +88,9 @@ export function DataTable<TData, TValue>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              // Skeleton loading state
               Array.from({ length: pagination.pageSize }).map((_, i) => (
                 <TableRow key={i}>
-                  {columns.map((col, j) => (
+                  {columns.map((_col, j) => (
                     <TableCell key={j}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>

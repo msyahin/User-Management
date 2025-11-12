@@ -2,7 +2,7 @@ import type { AxiosError } from 'axios';
 import type { IErrorResponse } from '@/features/common';
 import type { ContextModalProps } from '@/components/modal/types';
 
-import { useState } from 'react'; // --- ADDED ---
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,9 +37,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // --- ADDED ---
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-import { createUser, updateUser, uploadToImgBb } from './api'; // --- UPDATED ---
+import { createUser, updateUser, uploadToImgBb } from './api';
 import { UserFormSchema, IUserRole } from './types';
 import type { IAddUserReq, IUserManagement } from './types';
 
@@ -53,12 +53,8 @@ export const UserActionModal = ({
   onSuccess: () => void;
 }>) => {
   const { type, user, onSuccess } = innerProps;
-  //   const { t } = useTranslation();
-
-  // --- ADDED ---
   const [preview, setPreview] = useState<string | null>(user?.avatar || null);
   const [isUploading, setIsUploading] = useState(false);
-  // --- END ADDED ---
 
   const form = useForm<IAddUserReq>({
     resolver: zodResolver(UserFormSchema),
@@ -104,22 +100,18 @@ export const UserActionModal = ({
     },
   });
 
-  // --- UPDATED: onSubmit now handles file upload ---
   const onSubmit = async (data: IAddUserReq) => {
     setIsUploading(true);
     let submissionData = { ...data };
     let uploadToast: string | number | undefined;
 
     try {
-      // Check if avatar is a File object
       if (submissionData.avatar && typeof submissionData.avatar !== 'string') {
         uploadToast = toast.loading('Uploading avatar...');
         const imageUrl = await uploadToImgBb(submissionData.avatar);
-        submissionData.avatar = imageUrl; // Replace File with URL
+        submissionData.avatar = imageUrl;
         toast.success('Avatar uploaded!', { id: uploadToast });
       }
-
-      // Proceed with create or edit mutation
       if (type === 'create') {
         addMutation.mutate(submissionData);
       }
@@ -172,8 +164,8 @@ export const UserActionModal = ({
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              field.onChange(file); // Set form value to File
-                              setPreview(URL.createObjectURL(file)); // Set preview
+                              field.onChange(file);
+                              setPreview(URL.createObjectURL(file));
                             }
                           }}
                           className="file:text-primary file:font-semibold"
@@ -190,11 +182,10 @@ export const UserActionModal = ({
                           type="text"
                           placeholder="Enter image URL"
                           disabled={isUploading}
-                          // Only show string value, not [object File]
                           value={typeof field.value === 'string' ? field.value : ''}
                           onChange={(e) => {
-                            field.onChange(e.target.value); // Set form value to string
-                            setPreview(e.target.value); // Set preview
+                            field.onChange(e.target.value);
+                            setPreview(e.target.value);
                           }}
                         />
                       </FormControl>

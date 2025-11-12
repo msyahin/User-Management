@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios';
-import type { IErrorResponse } from '@/features/common'; // Assuming this global type
-import type { ColumnSort, RowSelectionState } from '@tanstack/react-table'; //
+import type { IErrorResponse } from '@/features/common';
+import type { ColumnSort } from '@tanstack/react-table';
 
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
@@ -9,8 +9,7 @@ import {
   PlusCircle,
   X,
   Calendar as CalendarIcon,
-  Trash2,
-} from 'lucide-react'; //
+} from 'lucide-react';
 
 // Shadcn UI Components
 import { Input } from '@/components/ui/input';
@@ -36,7 +35,6 @@ import { format } from 'date-fns';
 import { useDebounce } from '@/features/hooks/use-debounce';
 import { useModalManager } from '@/components/modal/use-modal-manager';
 
-// Our new Shadcn-based data table
 import { DataTable } from '@/components/table/data-table';
 
 import { UserManagementColumns } from './columns';
@@ -45,28 +43,21 @@ import { IUserRole } from '../types';
 
 const UserManagementTable = () => {
   const { openContextModal, openAlertModal, closeAllModals } = useModalManager();
-  // const { t } = useTranslation();
-
-  // Filters State
   const [searchTerm, setSearchTerm] = useState('');
-  // FIX 1: Default state is now 'ALL'. The state will never be an empty string.
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
 
-  // Table State
   const [sorting, setSorting] = useState<ColumnSort[]>([]);
   const [pagination, setPagination] = useState({
-    pageIndex: 0, // tanstack-table uses 0-based index
+    pageIndex: 0,
     pageSize: 10,
   });
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({}); //
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
   const queryParams = useMemo(() => {
     return {
       search: debouncedSearch || undefined,
-      // FIX 2: If roleFilter is 'ALL', send 'undefined' to the API.
       role: roleFilter === 'ALL' ? undefined : (roleFilter as IUserRole),
       createdAt: dateFilter,
       page: pagination.pageIndex + 1,
@@ -97,32 +88,11 @@ const UserManagementTable = () => {
     },
   });
 
-  //
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (userIds: string[]) => {
-      return Promise.all(userIds.map((id) => deleteUser(id)));
-    },
-    onSuccess: () => {
-      refetch();
-      setRowSelection({}); // Clear selection
-      closeAllModals();
-      toast.success('Selected users deleted successfully.');
-    },
-    onError: (error: AxiosError) => {
-      const errorPayload = error?.response?.data as IErrorResponse;
-      toast.error(errorPayload?.message ?? 'Failed to delete selected users.');
-    },
-  });
-  //
-
   const handleClearFilters = () => {
     setSearchTerm('');
-    // FIX 3: Reset roleFilter back to 'ALL'
     setRoleFilter('ALL');
     setDateFilter(null);
   };
-
-  const selectedRowCount = Object.keys(rowSelection).length; //
 
   return (
     <Card>
@@ -138,9 +108,7 @@ const UserManagementTable = () => {
             />
             {/* Role Filter */}
             <Select
-              // FIX 4: The value is now just roleFilter
               value={roleFilter}
-              // FIX 5: onValueChange simply sets the state.
               onValueChange={(value) => setRoleFilter(value)}
             >
               <SelectTrigger className="w-full md:w-[180px]">
@@ -181,37 +149,10 @@ const UserManagementTable = () => {
                 />
               </PopoverContent>
             </Popover>
-            {/* --- UPDATED: Conditional Clear/Delete Button --- */}
-            {selectedRowCount > 0 ? (
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  const selectedUserIds = Object.keys(rowSelection)
-                    .map((index) => data?.data[parseInt(index)]?.id)
-                    .filter(Boolean) as string[];
-
-                  if (selectedUserIds.length === 0) return;
-
-                  openAlertModal({
-                    title: 'Delete Selected Users',
-                    description: `Are you sure you want to delete ${selectedUserIds.length} user(s)? This action cannot be undone.`,
-                    onConfirm: () => {
-                      bulkDeleteMutation.mutate(selectedUserIds);
-                    },
-                    confirmVariant: 'destructive',
-                  });
-                }}
-                disabled={bulkDeleteMutation.isPending}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete ({selectedRowCount})
-              </Button>
-            ) : (
-              <Button variant="ghost" onClick={handleClearFilters}>
-                <X className="mr-2 h-4 w-4" /> Clear
-              </Button>
-            )}
-            {/* --- END UPDATED --- */}
+            {/* Clear Filters */}
+            <Button variant="ghost" onClick={handleClearFilters}>
+              <X className="mr-2 h-4 w-4" /> Clear
+            </Button>
           </div>
           {/* Add User Button */}
           <Button
@@ -255,10 +196,9 @@ const UserManagementTable = () => {
                 onConfirm: () => {
                   deleteMutation.mutate(user.id);
                 },
-                confirmVariant: 'destructive', // Use this to style the confirm button
+                confirmVariant: 'default',
               });
             },
-            // --- ADDED THIS BLOCK ---
             onViewBioClick: (user) => {
               openAlertModal({
                 title: `${user.name}'s Bio`,
@@ -272,7 +212,6 @@ const UserManagementTable = () => {
                 cancelText: 'Close',
               });
             },
-            // --- END ADDED BLOCK ---
           })}
           data={data?.data ?? []}
           pageCount={data?.totalSize ? Math.ceil(data.totalSize / pagination.pageSize) : 0}
@@ -281,8 +220,6 @@ const UserManagementTable = () => {
           onPaginationChange={setPagination}
           sorting={sorting}
           onSortingChange={setSorting}
-          rowSelection={rowSelection} //
-          onRowSelectionChange={setRowSelection} //
         />
       </CardContent>
     </Card>

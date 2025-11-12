@@ -34,7 +34,7 @@ export const ModalProvider = ({ children }: ModalProviderProps) => {
 
   const contextValue = useMemo(
     () => ({ open, contents, openModal, closeModal }),
-    [open, contents] // Only recompute when `open` changes
+    [open, contents]
   );
 
   return <ModalContext.Provider value={contextValue}>{children}</ModalContext.Provider>;

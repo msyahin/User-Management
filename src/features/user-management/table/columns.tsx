@@ -5,7 +5,7 @@ import {
   ArrowUpDown,
   Edit,
   Trash2,
-  FileText, // --- ADDED ---
+  FileText,
 } from 'lucide-react';
 
 // Shadcn UI Components
@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox'; //
 
 import { formatStr } from '@/utils/format-time';
 import { type IUserManagement, IUserRole } from '../types';
@@ -26,10 +25,9 @@ import { type IUserManagement, IUserRole } from '../types';
 interface IUserManagementColumns {
   onEditClick: (user: IUserManagement) => void;
   onDeleteClick: (user: IUserManagement) => void;
-  onViewBioClick: (user: IUserManagement) => void; // --- ADDED ---
+  onViewBioClick: (user: IUserManagement) => void;
 }
 
-// Custom header component for sorting
 const SortableHeader = ({
   label,
   column,
@@ -53,33 +51,10 @@ const SortableHeader = ({
 export const UserManagementColumns = ({
   onEditClick,
   onDeleteClick,
-  onViewBioClick, // --- ADDED ---
+  onViewBioClick,
 }: IUserManagementColumns): ColumnDef<IUserManagement>[] => {
-  // const { t } = useTranslation();
 
   return [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
     {
       id: 'avatar',
       header: () => null,
@@ -94,22 +69,22 @@ export const UserManagementColumns = ({
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => <SortableHeader label="Name" column={column} />, //
+      header: ({ column }) => <SortableHeader label="Name" column={column} />, 
       cell: ({ row }) => (
         <span className="font-medium">{row.original.name}</span>
       ),
     },
     {
       accessorKey: 'email',
-      header: ({ column }) => <SortableHeader label="Email" column={column} />, //
+      header: ({ column }) => <SortableHeader label="Email" column={column} />, 
     },
     {
       accessorKey: 'phoneNumber',
-      header: 'Phone Number', //
+      header: 'Phone Number', 
     },
     {
       accessorKey: 'role',
-      header: 'Role', //
+      header: 'Role', 
       cell: ({ row }) => {
         const role = row.original.role;
         const variant: 'default' | 'secondary' | 'outline' =
@@ -123,7 +98,7 @@ export const UserManagementColumns = ({
     },
     {
       accessorKey: 'active',
-      header: 'Status', //
+      header: 'Status', 
       cell: ({ row }) => {
         const status = row.original.active ? 'Active' : 'Inactive';
         const variant: 'default' | 'destructive' = row.original.active
@@ -135,7 +110,7 @@ export const UserManagementColumns = ({
     {
       accessorKey: 'createdAt',
       header: ({ column }) => (
-        <SortableHeader label="Creation Date" column={column} /> //
+        <SortableHeader label="Creation Date" column={column} /> 
       ),
       cell: ({ row }) => (
         <span>{dayjs(row.original.createdAt).format(formatStr.paramCase.date)}</span>
@@ -143,7 +118,7 @@ export const UserManagementColumns = ({
     },
     {
       accessorKey: 'bio',
-      header: 'Bio', //
+      header: 'Bio', 
       cell: ({ row }) => (
         <p className="max-w-[200px] truncate" title={row.original.bio}>
           {row.original.bio}
@@ -163,7 +138,6 @@ export const UserManagementColumns = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {/* --- ADDED THIS BLOCK --- */}
               {row.original.bio && (
                 <DropdownMenuItem
                   onClick={() => onViewBioClick(row.original)}
@@ -172,7 +146,6 @@ export const UserManagementColumns = ({
                   View Bio
                 </DropdownMenuItem>
               )}
-              {/* --- END ADDED BLOCK --- */}
               <DropdownMenuItem
                 onClick={() => onEditClick(row.original)}
               >

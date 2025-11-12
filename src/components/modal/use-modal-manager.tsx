@@ -101,8 +101,8 @@ export const ModalManagerProvider = ({
             confirmVariant,
           },
           dialogProps: {},
-          withCloseButton: true, // Alert modals should have close button
-          closeOnClickOutside: false, // Alert modals shouldn't close on outside click
+          withCloseButton: true,
+          closeOnClickOutside: false,
         },
       ]);
       return id;
