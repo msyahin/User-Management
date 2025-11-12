@@ -42,6 +42,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { createUser, updateUser, uploadToImgBb } from './api';
 import { UserFormSchema, IUserRole } from './types';
 import type { IAddUserReq, IUserManagement } from './types';
+import { PhoneInput } from '@/components/phone-input';
 
 export const UserActionModal = ({
   context,
@@ -233,7 +234,11 @@ export const UserActionModal = ({
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="+1 234 567 890" {...field} />
+                    <PhoneInput 
+                    placeholder="104264606" 
+                    defaultCountry='MY'
+                    {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
