@@ -30,6 +30,9 @@ import { DataTable } from '@/components/table/data-table';
 import { UserManagementColumns } from './columns';
 import { deleteUser, fetchUsers } from '../api';
 import { IUserRole } from '../types';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import DatePickerButton from '@/components/date-picker';
 
 const UserManagementTable = () => {
   const { openContextModal, openAlertModal, closeAllModals } = useModalManager();
@@ -44,6 +47,9 @@ const UserManagementTable = () => {
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
+  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(1, 'month'));
+  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
+
   const queryParams = useMemo(() => {
     return {
       search: debouncedSearch || undefined,
@@ -54,8 +60,10 @@ const UserManagementTable = () => {
       order: (
         sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined
       ) as 'asc' | 'desc' | undefined,
+      startDate: startDate || dayjs().subtract(1, 'month'),
+      endDate: endDate || dayjs()
     };
-  }, [debouncedSearch, roleFilter, pagination, sorting]);
+  }, [debouncedSearch, roleFilter, pagination, sorting, startDate, endDate]);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['userManagement', queryParams],
@@ -110,6 +118,12 @@ const UserManagementTable = () => {
                 ))}
               </SelectContent>
             </Select>
+            {/* Date Filters */}
+            <DatePickerButton
+              startDate={startDate}
+              endDate={endDate}
+              setStartDate={setStartDate}
+              setEndDate={setEndDate} />
             {/* Clear Filters */}
             <Button variant="ghost" onClick={handleClearFilters}>
               <X className="mr-2 h-4 w-4" /> Clear

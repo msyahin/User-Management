@@ -2,6 +2,8 @@ import type { AxiosError, AxiosResponse } from 'axios';
 import axios from 'axios';
 import type { IAddUserReq, IListUserReq, IListUserRes } from './types';
 import { CONFIG } from '@/config-global';
+import dayjs from 'dayjs';
+import { formatStr } from '@/utils/format-time';
 
 const axiosInstance = axios.create({
   baseURL: CONFIG.APP_SERVER_URL,
@@ -39,24 +41,20 @@ export const uploadToImgBb = async (file: File): Promise<string> => {
 };
 
 export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> => {
-  const cleanParams: Record<string, string | number | boolean> = {};
+  const formattedStartDate = dayjs(params?.startDate).startOf('day').format(formatStr.tz);
+  const formattedEndDate = dayjs(params?.endDate).endOf('day').format(formatStr.tz);
 
-  if (params.search) {
-    cleanParams.search = params.search;
-  }
-  if (params.role) {
-    cleanParams.role = params.role;
-  }
-  if (params.sortBy) {
-    cleanParams.sortBy = params.sortBy; 
-  }
-  if (params.order) {
-    cleanParams.order = params.order; 
-  }
-  const res = await axiosInstance.get('/api/v1/user', { params: cleanParams });
+  const res = await axiosInstance.get('/api/v1/user',
+    {
+      params: {
+        ...params,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate
+      }
+    });
   const data = res.data;
   const totalSize = data.length; // Faking total size
-  return{
+  return {
     data: data,
     totalSize: totalSize
   }

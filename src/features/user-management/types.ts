@@ -1,3 +1,4 @@
+import type { Dayjs } from 'dayjs';
 import { z } from 'zod';
 
 export enum IUserRole {
@@ -39,6 +40,8 @@ export type IListUserReq = {
   role?: IUserRole | '';
   sortBy?: string;
   order?: 'asc' | 'desc';
+  startDate?: Dayjs;
+  endDate?: Dayjs;
 };
 
 export type IListUserRes = {
