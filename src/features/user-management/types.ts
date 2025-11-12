@@ -37,7 +37,6 @@ export type IAddUserReq = z.infer<typeof UserFormSchema>;
 export type IListUserReq = {
   search?: string;
   role?: IUserRole | '';
-  createdAt?: Date | null;
   sortBy?: string;
   order?: 'asc' | 'desc';
 };

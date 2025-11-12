@@ -47,11 +47,6 @@ export const fetchUsers = async (params: IListUserReq): Promise<IListUserRes> =>
   if (params.role) {
     cleanParams.role = params.role;
   }
-  if (params.createdAt) {
-    // This is tricky with MockAPI. We'll assume it can filter by a date string.
-    cleanParams.createdAt = params.createdAt.toISOString().split('T')[0];
-  }
-
   if (params.sortBy) {
     cleanParams.sortBy = params.sortBy; 
   }

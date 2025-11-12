@@ -8,7 +8,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   PlusCircle,
   X,
-  Calendar as CalendarIcon,
 } from 'lucide-react';
 
 // Shadcn UI Components
@@ -21,16 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent } from '@/components/ui/card';
-
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 
 import { useDebounce } from '@/features/hooks/use-debounce';
 import { useModalManager } from '@/components/modal/use-modal-manager';
@@ -45,7 +35,6 @@ const UserManagementTable = () => {
   const { openContextModal, openAlertModal, closeAllModals } = useModalManager();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
-  const [dateFilter, setDateFilter] = useState<Date | null>(null);
 
   const [sorting, setSorting] = useState<ColumnSort[]>([]);
   const [pagination, setPagination] = useState({
@@ -59,7 +48,6 @@ const UserManagementTable = () => {
     return {
       search: debouncedSearch || undefined,
       role: roleFilter === 'ALL' ? undefined : (roleFilter as IUserRole),
-      createdAt: dateFilter,
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
       sortBy: sorting.length > 0 ? sorting[0].id : undefined,
@@ -67,7 +55,7 @@ const UserManagementTable = () => {
         sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : undefined
       ) as 'asc' | 'desc' | undefined,
     };
-  }, [debouncedSearch, roleFilter, dateFilter, pagination, sorting]);
+  }, [debouncedSearch, roleFilter, pagination, sorting]);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['userManagement', queryParams],
@@ -91,7 +79,6 @@ const UserManagementTable = () => {
   const handleClearFilters = () => {
     setSearchTerm('');
     setRoleFilter('ALL');
-    setDateFilter(null);
   };
 
   return (
@@ -123,32 +110,6 @@ const UserManagementTable = () => {
                 ))}
               </SelectContent>
             </Select>
-            {/* Date Filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    'w-full md:w-[240px] justify-start text-left font-normal',
-                    !dateFilter && 'text-muted-foreground'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateFilter ? format(dateFilter, 'PPP') : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dateFilter ?? undefined}
-                  onSelect={(date: Date | undefined) => {
-                    setDateFilter(date ?? null);
-                  }}
-                  required={false}
-                  autoFocus
-                />
-              </PopoverContent>
-            </Popover>
             {/* Clear Filters */}
             <Button variant="ghost" onClick={handleClearFilters}>
               <X className="mr-2 h-4 w-4" /> Clear
