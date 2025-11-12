@@ -3,7 +3,7 @@ import type { IErrorResponse } from '@/features/common';
 import type { ColumnSort, RowSelectionState } from '@tanstack/react-table';
 
 import { toast } from 'sonner';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   PlusCircle,
@@ -29,8 +29,8 @@ import { useModalManager } from '@/components/modal/use-modal-manager';
 import { DataTable } from '@/components/table/data-table';
 
 import { UserManagementColumns } from './columns';
-import { deleteUser, fetchUsers } from '../api';
-import { IUserRole } from '../types';
+import { deleteUser, fetchUsers, createUser } from '../api';
+import { IUserRole, type IUserManagement } from '../types';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import DatePickerButton from '@/components/date-picker';
@@ -47,6 +47,8 @@ const UserManagementTable = () => {
     pageIndex: 0,
     pageSize: 10,
   });
+  const pendingDeletionRef = useRef<{ users: IUserManagement[]; expiry: number } | null>(null);
+  const undoTimerRef = useRef<number | null>(null);
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
@@ -109,8 +111,106 @@ const UserManagementTable = () => {
     onError: (error: AxiosError) => {
       const errorPayload = error?.response?.data as IErrorResponse;
       toast.error(errorPayload?.message ?? 'Failed to delete users');
+      queryClient.invalidateQueries({ queryKey: ['userManagement'] });
     },
   });
+
+  const restoreUsersMutation = useMutation({
+    mutationFn: async (users: IUserManagement[]) => {
+      for (const user of users) {
+        const { id, ...userData } = user;
+        await createUser(userData);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userManagement'] });
+      toast.success('Users restored successfully');
+    },
+    onError: (error: AxiosError) => {
+      const errorPayload = error?.response?.data as IErrorResponse;
+      toast.error(errorPayload?.message ?? 'Failed to restore users');
+    },
+  });
+
+  const commitPendingDeletion = () => {
+    if (pendingDeletionRef.current) {
+      deleteMultipleMutation.mutate(pendingDeletionRef.current.users.map((u) => u.id));
+      pendingDeletionRef.current = null;
+      sessionStorage.removeItem('pendingDeletion');
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
+      }
+    }
+  };
+
+  const handleBulkDelete = () => {
+    commitPendingDeletion(); // Commit any existing pending deletion
+
+    const selectedIndexes = Object.keys(rowSelection).map(Number);
+    const usersToDelete = selectedIndexes.map((index) => (data?.data ?? [])[index]).filter(Boolean) as IUserManagement[];
+    if (usersToDelete.length === 0) return;
+
+    const expiry = Date.now() + 5000;
+    pendingDeletionRef.current = { users: usersToDelete, expiry };
+    sessionStorage.setItem('pendingDeletion', JSON.stringify({ users: usersToDelete, expiry }));
+
+    queryClient.setQueryData(['userManagement', queryParams], (oldData: any) => ({
+      ...oldData,
+      data: oldData.data.filter((user: IUserManagement) => !usersToDelete.find((u) => u.id === user.id)),
+    }));
+
+    toast.info(`${usersToDelete.length} users deleted.`, {
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+          pendingDeletionRef.current = null;
+          sessionStorage.removeItem('pendingDeletion');
+          queryClient.setQueryData(['userManagement', queryParams], (oldData: any) => ({
+            ...oldData,
+            data: [...oldData.data, ...usersToDelete],
+          }));
+          toast.success('Deletion undone.');
+        },
+      },
+    });
+
+    undoTimerRef.current = setTimeout(commitPendingDeletion, 5000);
+  };
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('pendingDeletion');
+    if (stored) {
+      const { users, expiry } = JSON.parse(stored);
+      const remainingTime = expiry - Date.now();
+
+      if (remainingTime > 0) {
+        pendingDeletionRef.current = { users, expiry };
+        undoTimerRef.current = setTimeout(commitPendingDeletion, remainingTime);
+        toast.info(`${users.length} users pending deletion.`, {
+          action: {
+            label: 'Undo',
+            onClick: () => {
+              if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+              pendingDeletionRef.current = null;
+              sessionStorage.removeItem('pendingDeletion');
+              restoreUsersMutation.mutate(users);
+            },
+          },
+        });
+      } else {
+        commitPendingDeletion();
+      }
+    }
+
+    return () => {
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+      }
+      commitPendingDeletion();
+    };
+  }, []);
 
   const handleClearFilters = () => {
     setSearchTerm('');
@@ -171,10 +271,8 @@ const UserManagementTable = () => {
                     title: 'Bulk Delete Users',
                     description: `Are you sure you want to delete ${Object.keys(rowSelection).length} selected users?`,
                     onConfirm: () => {
-                      const selectedIds = Object.keys(rowSelection).map(
-                        (index) => data?.data[parseInt(index, 10)].id
-                      ).filter(Boolean) as string[];
-                      deleteMultipleMutation.mutate(selectedIds);
+                      handleBulkDelete();
+                      closeAllModals();
                     },
                     confirmVariant: 'destructive',
                   });
