@@ -1,6 +1,7 @@
 import type {
   ColumnDef,
   SortingState,
+  RowSelectionState,
 } from '@tanstack/react-table';
 
 import {
@@ -34,6 +35,8 @@ interface DataTableProps<TData, TValue> {
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   sorting: SortingState;
   onSortingChange: (sorting: SortingState) => void;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: (rowSelection: RowSelectionState) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -45,6 +48,8 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   sorting,
   onSortingChange,
+  rowSelection,
+  onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -61,12 +66,20 @@ export function DataTable<TData, TValue>({
       const newState = typeof updater === 'function' ? updater(pagination) : updater;
       onPaginationChange(newState);
     },
+    onRowSelectionChange: (updater) => {
+      if (onRowSelectionChange) {
+        const newState = typeof updater === 'function' ? updater(rowSelection || {}) : updater;
+        onRowSelectionChange(newState);
+      }
+    },
     state: {
       sorting,
       pagination,
+      rowSelection,
     },
     manualPagination: true,
     manualSorting: true,
+    enableRowSelection: true,
   });
 
   return (

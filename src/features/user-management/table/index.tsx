@@ -1,12 +1,13 @@
 import type { AxiosError } from 'axios';
 import type { IErrorResponse } from '@/features/common';
-import type { ColumnSort } from '@tanstack/react-table';
+import type { ColumnSort, RowSelectionState } from '@tanstack/react-table';
 
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   PlusCircle,
+  Trash2,
   X,
 } from 'lucide-react';
 
@@ -35,11 +36,13 @@ import dayjs from 'dayjs';
 import DatePickerButton from '@/components/date-picker';
 
 const UserManagementTable = () => {
+  const queryClient = useQueryClient();
   const { openContextModal, openAlertModal, closeAllModals } = useModalManager();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
 
   const [sorting, setSorting] = useState<ColumnSort[]>([]);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -72,7 +75,7 @@ const UserManagementTable = () => {
     };
   }, [debouncedSearch, roleFilter, pagination, sorting, startDate, endDate]);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['userManagement', queryParams],
     queryFn: () => fetchUsers(queryParams),
     refetchOnWindowFocus: false,
@@ -81,13 +84,31 @@ const UserManagementTable = () => {
   const deleteMutation = useMutation({
     mutationFn: async (userId: string) => deleteUser(userId),
     onSuccess: () => {
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ['userManagement'] });
       closeAllModals();
       toast.success('Delete Success');
     },
     onError: (error: AxiosError) => {
       const errorPayload = error?.response?.data as IErrorResponse;
       toast.error(errorPayload?.message ?? 'Failed to delete user');
+    },
+  });
+
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (userIds: string[]) => {
+      for (const userId of userIds) {
+        await deleteUser(userId);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userManagement'] });
+      closeAllModals();
+      setRowSelection({});
+      toast.success('All selected users deleted successfully');
+    },
+    onError: (error: AxiosError) => {
+      const errorPayload = error?.response?.data as IErrorResponse;
+      toast.error(errorPayload?.message ?? 'Failed to delete users');
     },
   });
 
@@ -141,24 +162,47 @@ const UserManagementTable = () => {
               </Button>
             )}
           </div>
-          {/* Add User Button */}
-          <Button
-            onClick={() => {
-              openContextModal({
+          <div className="flex gap-2">
+            {Object.keys(rowSelection).length > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  openAlertModal({
+                    title: 'Bulk Delete Users',
+                    description: `Are you sure you want to delete ${Object.keys(rowSelection).length} selected users?`,
+                    onConfirm: () => {
+                      const selectedIds = Object.keys(rowSelection).map(
+                        (index) => data?.data[parseInt(index, 10)].id
+                      ).filter(Boolean) as string[];
+                      deleteMultipleMutation.mutate(selectedIds);
+                    },
+                    confirmVariant: 'destructive',
+                  });
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete ({Object.keys(rowSelection).length})
+              </Button>
+            )}
+            {/* Add User Button */}
+            <Button
+              onClick={() => {
+                openContextModal({
                 modal: 'userAction',
                 title: 'Add User',
                 innerProps: {
                   type: 'create',
                   onSuccess: () => {
-                    refetch();
+                    queryClient.invalidateQueries({ queryKey: ['userManagement'] });
                   },
                 },
               });
-            }}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add User
-          </Button>
+              }}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add User
+            </Button>
+          </div>
         </div>
 
         <DataTable
@@ -171,7 +215,7 @@ const UserManagementTable = () => {
                   type: 'edit',
                   user,
                   onSuccess: () => {
-                    refetch();
+                    queryClient.invalidateQueries({ queryKey: ['userManagement'] });
                   },
                 },
               });
@@ -207,6 +251,8 @@ const UserManagementTable = () => {
           onPaginationChange={setPagination}
           sorting={sorting}
           onSortingChange={setSorting}
+          rowSelection={rowSelection}
+          onRowSelectionChange={setRowSelection}
         />
       </CardContent>
     </Card>
