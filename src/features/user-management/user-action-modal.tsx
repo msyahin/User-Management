@@ -2,7 +2,7 @@ import type { AxiosError } from 'axios';
 import type { IErrorResponse } from '@/features/common';
 import type { ContextModalProps } from '@/components/modal/types';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -99,6 +99,14 @@ export const UserActionModal = ({
       toast.error(errorPayload?.message ?? 'Failed to update user');
     },
   });
+
+  useEffect(() => {
+    return () => {
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
 
   const onSubmit = async (data: IAddUserReq) => {
     setIsUploading(true);
