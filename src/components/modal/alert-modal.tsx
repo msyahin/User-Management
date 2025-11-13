@@ -19,6 +19,7 @@ export const AlertModal = ({
     cancelText = 'Cancel',
     confirmText = 'Confirm',
     confirmVariant = 'default',
+    showCancel = true,
   } = innerProps;
 
   const handleCancel = () => {
@@ -34,9 +35,11 @@ export const AlertModal = ({
     <>
       {description && <DialogDescription>{description}</DialogDescription>}
       <DialogFooter className="pt-4">
-        <Button variant="outline" onClick={handleCancel}>
-          {cancelText}
-        </Button>
+        {showCancel && (
+          <Button variant="outline" onClick={handleCancel}>
+            {cancelText}
+          </Button>
+        )}
         <Button variant={confirmVariant} onClick={handleConfirm}>
           {confirmText}
         </Button>

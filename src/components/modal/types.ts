@@ -38,6 +38,7 @@ export interface AlertModalProps {
   cancelText?: string;
   confirmText?: string;
   confirmVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  showCancel?: boolean;
 }
 
 export interface ModalContextType {

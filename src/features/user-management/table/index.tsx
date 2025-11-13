@@ -336,7 +336,7 @@ const UserManagementTable = () => {
                 ),
                 confirmText: 'OK',
                 onConfirm: () => closeAllModals(),
-                cancelText: 'Close',
+                showCancel: false,
               });
             },
           })}

@@ -82,6 +82,7 @@ export const ModalManagerProvider = ({
       cancelText,
       confirmText,
       confirmVariant,
+      showCancel,
     }: AlertModalProps): string => {
       idRef.current += 1;
       const id = `alert-modal-${idRef.current}`;
@@ -99,6 +100,7 @@ export const ModalManagerProvider = ({
             cancelText,
             confirmText,
             confirmVariant,
+            showCancel,
           },
           dialogProps: {},
           withCloseButton: true,
