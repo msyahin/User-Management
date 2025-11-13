@@ -32,7 +32,6 @@ import { UserManagementColumns } from './columns';
 import { deleteUser, fetchUsers, createUser } from '../api';
 import { IUserRole, type IUserManagement } from '../types';
 import type { Dayjs } from 'dayjs';
-import dayjs from 'dayjs';
 import DatePickerButton from '@/components/date-picker';
 
 const UserManagementTable = () => {
@@ -52,8 +51,8 @@ const UserManagementTable = () => {
 
   const debouncedSearch = useDebounce(searchTerm, 300);
 
-  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs().subtract(1, 'month'));
-  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs());
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
 
   const isFiltered =
     searchTerm !== '' ||
