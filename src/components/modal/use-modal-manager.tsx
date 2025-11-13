@@ -156,9 +156,7 @@ export const ModalManagerProvider = ({
               open
               onOpenChange={(open) => {
                 if (!open) {
-                  if (shouldCloseOnClickOutside) {
-                    handleClose();
-                  }
+                  handleClose();
                 }
               }}
               {...dialogProps}
