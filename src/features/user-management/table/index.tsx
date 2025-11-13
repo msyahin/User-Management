@@ -11,7 +11,6 @@ import {
   X,
 } from 'lucide-react';
 
-// Shadcn UI Components
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -144,7 +143,7 @@ const UserManagementTable = () => {
   };
 
   const handleBulkDelete = () => {
-    commitPendingDeletion(); // Commit any existing pending deletion
+    commitPendingDeletion();
 
     const selectedIndexes = Object.keys(rowSelection).map(Number);
     const usersToDelete = selectedIndexes.map((index) => (data?.data ?? [])[index]).filter(Boolean) as IUserManagement[];
@@ -267,13 +266,13 @@ const UserManagementTable = () => {
                 variant="destructive"
                 onClick={() => {
                   openAlertModal({
-                    title: 'Bulk Delete Users',
+                    title: 'Delete Users',
                     description: `Are you sure you want to delete ${Object.keys(rowSelection).length} selected users?`,
                     onConfirm: () => {
                       handleBulkDelete();
                       closeAllModals();
                     },
-                    confirmVariant: 'destructive',
+                    confirmVariant: 'default',
                   });
                 }}
               >

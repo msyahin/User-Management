@@ -8,7 +8,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 
-// Shadcn UI Components
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -235,7 +234,7 @@ export const UserActionModal = ({
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
                     <PhoneInput 
-                    placeholder="104264606" 
+                    placeholder="+60104264606" 
                     defaultCountry='MY'
                     {...field} 
                     />

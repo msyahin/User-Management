@@ -10,7 +10,6 @@ import {
   ArrowDown,
 } from 'lucide-react';
 
-// Shadcn UI Components
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -122,24 +121,41 @@ export const UserManagementColumns = ({
       header: 'Role', 
       cell: ({ row }) => {
         const role = row.original.role;
-        const variant: 'default' | 'secondary' | 'outline' =
-          role === IUserRole.ADMIN
-            ? 'default'
-            : role === IUserRole.USER
-              ? 'secondary'
-              : 'outline';
-        return <Badge variant={variant}>{role}</Badge>;
+        let badgeClass = '';
+
+        switch (role) {
+          case IUserRole.ADMIN:
+            badgeClass = 'bg-[#FF5730] hover:bg-[#FF5730]/80 text-white';
+            break;
+          case IUserRole.USER:
+            badgeClass = 'bg-[#1c252e] hover:bg-[#1c252e]/80 text-white';
+            break;
+          case IUserRole.GUEST:
+            badgeClass = 'bg-[#A9A9A9] hover:bg-[#A9A9A9]/80 text-white';
+            break;
+          default:
+            badgeClass = 'bg-secondary hover:bg-secondary/80 text-secondary-foreground';
+        }
+
+        return <Badge className={`${badgeClass} border-transparent`}>{role}</Badge>;
       },
     },
     {
       accessorKey: 'active',
       header: 'Status', 
       cell: ({ row }) => {
-        const status = row.original.active ? 'Active' : 'Inactive';
-        const variant: 'default' | 'destructive' = row.original.active
-          ? 'default'
-          : 'destructive';
-        return <Badge variant={variant}>{status}</Badge>;
+        const isActive = row.original.active;
+        return (
+          <Badge
+            className={`${
+              isActive
+                ? 'bg-[#00A76F] hover:bg-[#00A76F]/80'
+                : 'bg-[#F33C42] hover:bg-[#F33C42]/80'
+            } text-white border-transparent`}
+          >
+            {isActive ? 'Active' : 'Inactive'}
+          </Badge>
+        );
       },
     },
     {

@@ -21,7 +21,7 @@ interface IDatePickerButton {
 
   setStartDate: (date: Dayjs | null) => void;
   setEndDate: (date: Dayjs | null) => void;
-  className?: string; // <-- Added className prop for flexibility
+  className?: string;
 }
 
 const DatePickerButton: React.FC<IDatePickerButton> = ({
